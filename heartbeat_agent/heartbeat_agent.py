@@ -1,5 +1,6 @@
 import asyncio
 import datetime
+import json
 import logging
 import os
 import re
@@ -24,11 +25,13 @@ keep_running = True
 
 def get_kafka_url():
     with open(kafka_urlfile_path, "r") as file:
-        return file.readlines().strip()
+        url = file.read().strip()
+        print(url)
+        return url
 
 kafka_url = get_kafka_url()    
 
-async def init_kafka_producer():
+def init_kafka_producer():
     return KafkaProducer(
         bootstrap_servers=kafka_url,
         security_protocol=kafka_security_protocol,
@@ -37,7 +40,7 @@ async def init_kafka_producer():
         ssl_keyfile=kafka_keyfile_path,
     )
 
-async def read_config_file(config_filename):
+def read_config_file(config_filename):
     
     # # config file json format:
     #
@@ -51,7 +54,7 @@ async def read_config_file(config_filename):
     #
 
     with open(config_filename) as config_file:
-        lines = config_file.readlines()
+        lines = config_file.read()
         configs = json.loads(lines)
         
         assert isinstance(configs, list)
@@ -71,7 +74,6 @@ async def read_config_file(config_filename):
 
 async def poll_service(service):
         url = service["service_url"]   
-        interval = service["heartbeat_interval_seconds"]
         
         time_before = datetime.datetime.now()        
         
@@ -81,44 +83,59 @@ async def poll_service(service):
         # https://stackoverflow.com/questions/1905403/python-timemilli-seconds-calculation
         time_after = datetime.datetime.now()
         diff = time_after - time_before
-        duration_millis = diff.total_seconds * 1000
+        duration_millis = diff.total_seconds() * 1000
 
         regex_match = None    
         try:
-            if service[regex]:
-                regex = re.compile(service[regex])
+            if "regex" in service and service["regex"]:
+                regex = re.compile(service["regex"])
                 if regex.match(r.text):
                     regex_match = True
                 else:
                     regex_match = False
         except Exception as e:
             logging.exception(e)
+            raise e
         
         heartbeat = {}
         heartbeat["service_url"]          = str(url)
-        heartbeat["timestamp"]            = str(datetime.now(timezone.utc).isoformat())
+        heartbeat["timestamp"]            = str(datetime.datetime.now(datetime.timezone.utc).isoformat())
         heartbeat["response_time_millis"] = int(duration_millis)
         heartbeat["status_code"]          = int(r.status_code)
         heartbeat["regex_match"]          = regex_match
         return heartbeat
 
 async def write_to_kafka(producer, kafka_topic, heartbeat_dict):
-    safestring = json.dumps(heartbeat).hex()
-    producer.send(kafka_topic, safestring)
-    producer.flush()
+    
+    print(str(heartbeat_dict))
+    print(str(json.dumps(heartbeat_dict)))    
+    
+    safestring = json.dumps(heartbeat_dict)
+    
+    #producer.send(kafka_topic, safestring)
+    #producer.flush()
+
+async def poll_and_write(service, producer, kafka_topic):
+    heartbeat_dict = await poll_service(service)
+    await write_to_kafka(producer, kafka_topic, heartbeat_dict)
+    interval = service["heartbeat_interval_seconds"]
+    print(str(service["service_url"]) + " should sleep for " + str(interval) + " seconds")
+    await asyncio.sleep(interval)   
+    asyncio.ensure_future(poll_and_write(service, producer, kafka_topic), loop=event_loop)
 
 async def run_agent():
-    await service_dicts_list = read_config_file(heartbeat_config_filename)
-    await producer = init_kafka_producer()
+    service_dicts_list = read_config_file(heartbeat_config_filename)
+    producer = init_kafka_producer()
 
-    while keep_running:
-        for service in service_dicts_list:
-            try:
-                heartbeat_dict = await poll_service(service)            
-                await write_to_kafka(producer, kafka_topic, heartbeat_dict)
-            except Exception as e:
-                logging.exception(e)
+    for service in service_dicts_list:
+        try:
+            asyncio.create_task(
+                poll_and_write(service, producer, kafka_topic)
+            )
+        except Exception as e:
+            logging.exception(e)
+            raise e            
 
-            asyncio.sleep(service["heartbeat_interval_seconds"])
-
-asyncio.run(run_agent)
+event_loop = asyncio.get_event_loop()
+if __name__ == "__main__":
+    event_loop.run_until_complete(run_agent())

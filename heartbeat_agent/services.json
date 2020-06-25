@@ -11,6 +11,6 @@
   },
   {
     "service_url": "https://yle.fi",
-    "heartbeat_interval_seconds": 150,
+    "heartbeat_interval_seconds": 150
   }
 ]
