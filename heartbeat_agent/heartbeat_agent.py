@@ -76,9 +76,11 @@ def read_config_file(config_filename):
 async def poll_service(service):
         url = service["service_url"]   
         
+        print("Polling " + url)
+        
         time_before = datetime.datetime.now()        
         
-        # TODO: what is the desired behavior for a timeout?        
+        # TODO: what should we do on timeout?
         r = requests.get(url, timeout=heartbeat_timeout_seconds)
         
         # https://stackoverflow.com/questions/1905403/python-timemilli-seconds-calculation
@@ -106,13 +108,9 @@ async def poll_service(service):
         heartbeat["regex_match"]          = regex_match
         return heartbeat
 
-async def write_to_kafka(producer, kafka_topic, heartbeat_dict):
-    
-    print(str(heartbeat_dict))
-    
+async def write_to_kafka(producer, kafka_topic, heartbeat_dict):    
     as_string = json.dumps(heartbeat_dict)
-    print(as_string)
-    
+    print(as_string)    
     #producer.send(kafka_topic, as_string)
     #producer.flush()
 
@@ -122,7 +120,7 @@ async def poll_and_write(service, producer, kafka_topic):
     interval = service["heartbeat_interval_seconds"]
     print(str(service["service_url"]) + " should sleep for " + str(interval) + " seconds")
     await asyncio.sleep(interval)   
-    asyncio.ensure_future(poll_and_write(service, producer, kafka_topic), loop=event_loop)
+    await poll_and_write(service, producer, kafka_topic)
 
 async def run_agent():
     service_dicts_list = read_config_file(heartbeat_config_filename)
@@ -130,8 +128,8 @@ async def run_agent():
 
     tasks = []
     for service in service_dicts_list:
-        tasks.append( poll_and_write(service, producer, kafka_topic) )    
+        tasks.append( poll_and_write(service, producer, kafka_topic) )
     await asyncio.wait(tasks)
 
-#if __name__ == "__main__":
-event_loop.run_until_complete(run_agent())
+if __name__ == "__main__":
+    event_loop.run_until_complete(run_agent())

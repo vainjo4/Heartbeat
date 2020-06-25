@@ -6,11 +6,11 @@
   },
   {
     "service_url": "https://hs.fi",
-    "heartbeat_interval_seconds": 12,
+    "heartbeat_interval_seconds": 5,
     "regex": ""
   },
   {
     "service_url": "https://yle.fi",
-    "heartbeat_interval_seconds": 15
+    "heartbeat_interval_seconds": 3
   }
 ]
