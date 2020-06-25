@@ -21,6 +21,7 @@ kafka_security_protocol = "SSL"
 heartbeat_timeout_seconds = 5.0
 heartbeat_config_filename = "services.json"
 
+event_loop = asyncio.get_event_loop()
 keep_running = True
 
 def get_kafka_url():
@@ -108,11 +109,11 @@ async def poll_service(service):
 async def write_to_kafka(producer, kafka_topic, heartbeat_dict):
     
     print(str(heartbeat_dict))
-    print(str(json.dumps(heartbeat_dict)))    
     
-    safestring = json.dumps(heartbeat_dict)
+    as_string = json.dumps(heartbeat_dict)
+    print(as_string)
     
-    #producer.send(kafka_topic, safestring)
+    #producer.send(kafka_topic, as_string)
     #producer.flush()
 
 async def poll_and_write(service, producer, kafka_topic):
@@ -127,15 +128,10 @@ async def run_agent():
     service_dicts_list = read_config_file(heartbeat_config_filename)
     producer = init_kafka_producer()
 
+    tasks = []
     for service in service_dicts_list:
-        try:
-            asyncio.create_task(
-                poll_and_write(service, producer, kafka_topic)
-            )
-        except Exception as e:
-            logging.exception(e)
-            raise e            
+        tasks.append( poll_and_write(service, producer, kafka_topic) )    
+    await asyncio.wait(tasks)
 
-event_loop = asyncio.get_event_loop()
-if __name__ == "__main__":
-    event_loop.run_until_complete(run_agent())
+#if __name__ == "__main__":
+event_loop.run_until_complete(run_agent())
