@@ -111,8 +111,8 @@ async def poll_service(service):
 async def write_to_kafka(producer, kafka_topic, heartbeat_dict):    
     as_string = json.dumps(heartbeat_dict)
     print(as_string)    
-    #producer.send(kafka_topic, as_string)
-    #producer.flush()
+    producer.send(kafka_topic, as_string.encode("utf-8"))
+    producer.flush()
 
 async def poll_and_write(service, producer, kafka_topic):
     heartbeat_dict = await poll_service(service)
