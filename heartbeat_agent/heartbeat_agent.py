@@ -1,12 +1,12 @@
-import os
-from kafka import KafkaProducer
 import asyncio
-import requests
 import datetime
-import datetime
-import sys
 import logging
+import os
 import re
+import sys
+
+from kafka import KafkaProducer
+import requests
 
 kafka_conf_dir = sys.argv[1] #"../kafka_conf" 
 kafka_topic = sys.argv[2] # "heartbeat-1"
