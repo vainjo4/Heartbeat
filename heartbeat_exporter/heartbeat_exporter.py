@@ -1,11 +1,11 @@
+import json
+import logging
+import os
 import sys
 import time
-import os
-import logging
 
 from kafka import KafkaConsumer
 import psycopg2
-import json
 from psycopg2.extras import RealDictCursor
 
 kafka_conf_dir = sys.argv[1] #"../kafka_conf" 
@@ -76,7 +76,11 @@ def init_db(cursor):
 def write_heartbeat_to_db(cursor, heartbeat_as_dict):
     logging.info("write_heartbeat_to_db: " + str(heartbeat_as_dict))
     print("Writing to DB: " + str(heartbeat_as_dict))
-
+    
+    val = cursor.execute("SELECT COUNT(*) FROM heartbeat;")
+    row = cursor.fetchone()
+    print(str(row))
+    
     service_url          = heartbeat_as_dict["service_url"]
     timestamp            = heartbeat_as_dict["timestamp"]
     response_time_millis = heartbeat_as_dict["response_time_millis"]
@@ -85,10 +89,12 @@ def write_heartbeat_to_db(cursor, heartbeat_as_dict):
 
     cursor.execute("INSERT INTO heartbeat (service_url, timestamp, response_time_millis, status_code, regex_match) " + \
                "VALUES(%s,%s,%s,%s,%s) ON CONFLICT DO NOTHING;", (service_url, timestamp, response_time_millis, status_code, regex_match))
+               
 
 def run():
     logging.info(str(sys.argv[0]) + " started")
     with (psycopg2.connect(psql_uri)) as db_conn:
+        db_conn.autocommit = True
         cursor = db_conn.cursor(cursor_factory=RealDictCursor)
         init_db(cursor)
    
@@ -102,4 +108,5 @@ def run():
                     heartbeat = json.loads(msg.value)
                     write_heartbeat_to_db(cursor, heartbeat)
 
-run()
+if __name__ == "__main__":
+    run()

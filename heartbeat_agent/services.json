@@ -2,7 +2,7 @@
   {
     "service_url": "https://xkcd.com/",
     "heartbeat_interval_seconds": 10,
-    "regex": "web.*mic"
+    "regex": ".*WEBCOMIC.*"
   },
   {
     "service_url": "https://hs.fi",

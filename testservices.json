@@ -1,0 +1,7 @@
+[
+  {
+    "service_url": "https://xkcd.com/",
+    "heartbeat_interval_seconds": 3,
+    "regex": ".*ARCHIVE.*"
+  }
+]
