@@ -1,0 +1,16 @@
+[
+  {
+    "service_url": "https://xkcd.com/",
+    "heartbeat_interval_seconds": 100,
+    "regex": "web.*mic"
+  },
+  {
+    "service_url": "https://hs.fi",
+    "heartbeat_interval_seconds": 120,
+    "regex": ""
+  },
+  {
+    "service_url": "https://yle.fi",
+    "heartbeat_interval_seconds": 150,
+  }
+]
