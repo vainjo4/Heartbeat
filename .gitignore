@@ -1,8 +1,9 @@
 /kafka_conf/
 /psql_conf/
 /venv/
+/__pycache__
 /heartbeat_agent/venv/
 /heartbeat_agent/__pycache__
 /heartbeat_exporter/venv/
 /heartbeat_exporter/__pycache__
-/__pycache__
+

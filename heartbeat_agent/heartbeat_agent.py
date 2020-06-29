@@ -1,4 +1,5 @@
 import asyncio
+import configparser
 import datetime
 import json
 import logging
@@ -9,17 +10,23 @@ import sys
 from kafka import KafkaProducer
 import requests
 
-kafka_conf_dir = sys.argv[1] #"../kafka_conf" 
-kafka_topic = sys.argv[2] # "heartbeat-1"
-heartbeat_services_filename = sys.argv[3] #"services.json"
+current_dir = os.path.dirname(os.path.realpath(__file__))
+
+config = configparser.ConfigParser()
+configuration_file = sys.argv[1] if len(sys.argv) > 1 else os.path.join(current_dir, "conf", "heartbeat_agent.cfg")
+config.read(configuration_file)
+
+heartbeat_services_filepath = os.path.join(current_dir, config["heartbeat-agent"]["heartbeat_services_filepath"])
+heartbeat_timeout_seconds = float(config["heartbeat-agent"]["heartbeat_timeout_seconds"])
+
+kafka_conf_dir = os.path.join(current_dir, config["heartbeat-agent"]["kafka_conf_dir"])
+kafka_topic = config["heartbeat-agent"]["kafka_topic"]
+kafka_security_protocol = config["heartbeat-agent"]["kafka_security_protocol"]
 
 kafka_urlfile_path = os.path.join(kafka_conf_dir, "kafka_url.txt")
 kafka_cafile_path = os.path.join(kafka_conf_dir, "ca.pem")
 kafka_certfile_path = os.path.join(kafka_conf_dir, "service.cert")
 kafka_keyfile_path = os.path.join(kafka_conf_dir, "service.key")
-
-kafka_security_protocol = "SSL"
-heartbeat_timeout_seconds = 5.0
 
 keep_running = True
 event_loop = asyncio.get_event_loop()
@@ -84,7 +91,7 @@ async def poll_service(service):
         diff = time_after - time_before
         duration_millis = diff.total_seconds() * 1000
 
-        regex_match = None    
+        regex_match = None
         try:
             if "regex" in service and service["regex"]:
                 regex = re.compile(service["regex"])
@@ -130,5 +137,5 @@ async def run_agent(services_list):
     await asyncio.wait(tasks)
 
 if __name__ == "__main__":
-    services_list = read_services_file(heartbeat_services_filename)
+    services_list = read_services_file(heartbeat_services_filepath)
     event_loop.run_until_complete(run_agent(services_list))

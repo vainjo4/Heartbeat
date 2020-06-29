@@ -1,30 +1,39 @@
+import configparser
 import json
 import logging
 import os
 import sys
 import time
+import re
 
 from kafka import KafkaConsumer
 import psycopg2
 from psycopg2.extras import RealDictCursor
 
-kafka_conf_dir = sys.argv[1] #"../kafka_conf" 
-psql_conf_dir = sys.argv[2] #"../psql_conf" 
-topic_name = sys.argv[3] # "heartbeat-1"
+current_dir = os.path.dirname(os.path.realpath(__file__))
+
+config = configparser.ConfigParser()
+configuration_file = sys.argv[1] if len(sys.argv) > 1 else os.path.join(current_dir, "conf", "heartbeat_agent.cfg")
+config.read(configuration_file)
+
+kafka_conf_dir = os.path.join(current_dir, config["heartbeat-exporter"]["kafka_conf_dir"])
+psql_conf_dir = os.path.join(current_dir, config["heartbeat-exporter"]["psql_conf_dir"])
+
+topic_name = config["heartbeat-exporter"]["topic_name"]
+database_table_name = config["heartbeat-exporter"]["database_table_name"]
+
+kafka_consumer_timeout_millis = int(config["heartbeat-exporter"]["kafka_consumer_timeout_millis"])
+kafka_client_id = config["heartbeat-exporter"]["kafka_client_id"]
+kafka_group_id = config["heartbeat-exporter"]["kafka_group_id"]
+kafka_auto_offset_reset = config["heartbeat-exporter"]["kafka_auto_offset_reset"]
+kafka_security_protocol = config["heartbeat-exporter"]["kafka_security_protocol"]
 
 kafka_urlfile_path = os.path.join(kafka_conf_dir, "kafka_url.txt")
 kafka_cafile_path = os.path.join(kafka_conf_dir, "ca.pem")
 kafka_certfile_path = os.path.join(kafka_conf_dir, "service.cert")
 kafka_keyfile_path = os.path.join(kafka_conf_dir, "service.key")
-
 psql_urifile_path = os.path.join(psql_conf_dir, "psql_uri.txt")
 psql_cafile_path = os.path.join(psql_conf_dir, "ca.pem")
-
-kafka_consumer_timeout_millis = 10000
-kafka_client_id = "heartbeat-client-1"
-kafka_group_id = "heartbeat-group"
-kafka_auto_offset_reset = "earliest"
-kafka_security_protocol = "SSL"
 
 keep_running = True
 
@@ -69,17 +78,19 @@ def init_db(cursor):
       PRIMARY KEY(service_url, timestamp)
     """
 
-    creation_sql = "CREATE TABLE IF NOT EXISTS heartbeat (" + table_schema + ");"
+    creation_sql = "CREATE TABLE IF NOT EXISTS " + database_table_name + " (" + table_schema + ");"
     cursor.execute(creation_sql);
     logging.info("init_db done")
     
 def write_heartbeat_to_db(cursor, heartbeat_as_dict):
     logging.info("write_heartbeat_to_db: " + str(heartbeat_as_dict))
-    print("Writing to DB: " + str(heartbeat_as_dict))
     
-    val = cursor.execute("SELECT COUNT(*) FROM heartbeat;")
+    ####
+    print("Writing to DB: " + str(heartbeat_as_dict))    
+    val = cursor.execute("SELECT COUNT(*) FROM " + database_table_name + ";")
     row = cursor.fetchone()
     print(str(row))
+    ####
     
     service_url          = heartbeat_as_dict["service_url"]
     timestamp            = heartbeat_as_dict["timestamp"]
@@ -87,11 +98,15 @@ def write_heartbeat_to_db(cursor, heartbeat_as_dict):
     status_code          = heartbeat_as_dict["status_code"]
     regex_match          = heartbeat_as_dict["regex_match"]
 
-    cursor.execute("INSERT INTO heartbeat (service_url, timestamp, response_time_millis, status_code, regex_match) " + \
+    cursor.execute("INSERT INTO " + database_table_name + " (service_url, timestamp, response_time_millis, status_code, regex_match) " + \
                "VALUES(%s,%s,%s,%s,%s) ON CONFLICT DO NOTHING;", (service_url, timestamp, response_time_millis, status_code, regex_match))
-               
 
 def run():
+
+    # allowed characters: alphanumeric and underscore
+    database_name_regex = re.compile("[\\w_]")
+    assert database_name_regex.match(database_table_name)
+
     logging.info(str(sys.argv[0]) + " started")
     with (psycopg2.connect(psql_uri)) as db_conn:
         db_conn.autocommit = True
