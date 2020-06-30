@@ -85,13 +85,6 @@ def init_db(cursor):
 def write_heartbeat_to_db(cursor, heartbeat_as_dict):
     logging.info("write_heartbeat_to_db: " + str(heartbeat_as_dict))
     
-    ####
-    print("Writing to DB: " + str(heartbeat_as_dict))    
-    val = cursor.execute("SELECT COUNT(*) FROM " + database_table_name + ";")
-    row = cursor.fetchone()
-    print(str(row))
-    ####
-    
     service_url          = heartbeat_as_dict["service_url"]
     timestamp            = heartbeat_as_dict["timestamp"]
     response_time_millis = heartbeat_as_dict["response_time_millis"]

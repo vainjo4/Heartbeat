@@ -1,7 +1,11 @@
 [
   {
     "service_url": "https://xkcd.com/",
-    "heartbeat_interval_seconds": 2,
-    "regex": ".*ARCHIVE.*"
+    "heartbeat_interval_seconds": 2
+  },
+  {
+    "service_url": "https://example.com",
+    "heartbeat_interval_seconds": 10,
+	"regex": ".*xample Domai.*"
   }
 ]

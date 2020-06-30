@@ -81,7 +81,7 @@ async def poll_service(service):
         
         print("Polling " + url)
         
-        time_before = datetime.datetime.now()        
+        time_before = datetime.datetime.now()
         
         # TODO: what should we do on timeout?
         r = requests.get(url, timeout=heartbeat_timeout_seconds)
@@ -94,8 +94,7 @@ async def poll_service(service):
         regex_match = None
         try:
             if "regex" in service and service["regex"]:
-                regex = re.compile(service["regex"])
-                if regex.match(r.text):
+                if re.search(service["regex"], r.text):
                     regex_match = True
                 else:
                     regex_match = False

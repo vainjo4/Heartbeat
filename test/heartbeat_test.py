@@ -1,6 +1,7 @@
 import psycopg2
 from psycopg2.extras import RealDictCursor
 
+import datetime
 import configparser
 import asyncio
 import sys
@@ -18,11 +19,11 @@ else:
 def test_e2e():
     print("e2e_test")
 
-    database_table_name = "heartbeat_test"
-
     config = configparser.ConfigParser()
     configuration_file = "heartbeat_exporter_test.cfg"
     config.read(configuration_file)
+    
+    database_table_name = config["heartbeat-exporter"]["database_table_name"]
 
     psql_conf_dir = os.path.join(current_dir, "..", "psql_conf")
     psql_urifile_path = os.path.join(psql_conf_dir, "psql_uri.txt")
@@ -49,6 +50,8 @@ def test_e2e():
         print("count_before: " + str(count_before))
         
         print("Starting agent ...")
+        time_at_test_start = datetime.datetime.now(datetime.timezone.utc)
+        
         agent_args = [python_to_use, os.path.join(heartbeat_agent_dir, "heartbeat_agent.py"), os.path.join(current_dir, "heartbeat_agent_test.cfg")]
         agent_proc = subprocess.Popen(agent_args)
         time.sleep(5)
@@ -59,18 +62,30 @@ def test_e2e():
         exporter_args = [python_to_use, os.path.join(heartbeat_exporter_dir, "heartbeat_exporter.py"), os.path.join(current_dir, "heartbeat_exporter_test.cfg")]
         exporter_proc = subprocess.Popen(exporter_args)    
         
-        time.sleep(5)
+        time.sleep(10)
         exporter_proc.kill()
         
-        cursor.execute("SELECT COUNT(*) FROM " + database_table_name + ";")        
+        cursor.execute("SELECT * FROM " + database_table_name + ";")                
+        heartbeat_rows = cursor.fetchall()
+        heartbeat_rows = [ hb for hb in heartbeat_rows if hb["timestamp"] > time_at_test_start ]
         
-        count_after = cursor.fetchone()["count"]
+        assert len(heartbeat_rows) == 3
         
-        print("count_before: " + str(count_before))
-        print("count_after: " + str(count_after))       
-        assert count_before == 0
-        assert count_after == 2
-       
+        assert heartbeat_rows[0]["service_url"] == "https://xkcd.com/"        
+        assert heartbeat_rows[0]["status_code"] == 200
+        assert 10 < heartbeat_rows[0]["response_time_millis"] < 1000
+        assert heartbeat_rows[0]["regex_match"] == None
+        
+        assert heartbeat_rows[1]["service_url"] == "https://example.com"
+        assert heartbeat_rows[1]["status_code"] == 200
+        assert 10 < heartbeat_rows[1]["response_time_millis"] < 1000
+        assert heartbeat_rows[1]["regex_match"] == True
+        
+        assert heartbeat_rows[2]["service_url"] == "https://xkcd.com/"
+        assert heartbeat_rows[2]["status_code"] == 200
+        assert 10 < heartbeat_rows[2]["response_time_millis"] < 1000
+        assert heartbeat_rows[2]["regex_match"] == None
+     
 if __name__ == "__main__":
     test_e2e()
 

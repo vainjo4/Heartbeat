@@ -6,4 +6,4 @@
 /heartbeat_agent/__pycache__
 /heartbeat_exporter/venv/
 /heartbeat_exporter/__pycache__
-
+/.pytest_cache
