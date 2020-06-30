@@ -14,7 +14,7 @@ current_dir = os.path.dirname(os.path.realpath(__file__))
 if len(sys.argv) > 1:
     python_to_use = sys.argv[1]    
 else:
-    python_to_use = "..\\venv\\Scripts\\python"
+    python_to_use = "../venv/Scripts/python"
 
 def test_e2e():
     print("e2e_test")
