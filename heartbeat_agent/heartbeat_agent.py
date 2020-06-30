@@ -10,7 +10,12 @@ import sys
 from kafka import KafkaProducer
 import requests
 
+
 current_dir = os.path.dirname(os.path.realpath(__file__))
+logging.basicConfig(level=logging.INFO, format="[%(asctime)s] [%(levelname)s] - %(message)s")
+
+
+# --- Configuration ---
 
 config = configparser.ConfigParser()
 configuration_file = sys.argv[1] if len(sys.argv) > 1 else os.path.join(current_dir, "conf", "heartbeat_agent.cfg")
@@ -28,16 +33,18 @@ kafka_cafile_path = os.path.join(kafka_conf_dir, "ca.pem")
 kafka_certfile_path = os.path.join(kafka_conf_dir, "service.cert")
 kafka_keyfile_path = os.path.join(kafka_conf_dir, "service.key")
 
-keep_running = True
 event_loop = asyncio.get_event_loop()
 
 def get_kafka_url():
     with open(kafka_urlfile_path, "r") as file:
         url = file.read().strip()
-        print(url)
         return url
 
-kafka_url = get_kafka_url()    
+kafka_url = get_kafka_url()
+
+
+# --- Functions ---
+
 
 def init_kafka_producer():
     return KafkaProducer(
@@ -48,8 +55,9 @@ def init_kafka_producer():
         ssl_keyfile=kafka_keyfile_path,
     )
 
+
 def read_services_file(config_filename):
-    
+
     # # services file json format:
     #
     # [{
@@ -59,34 +67,32 @@ def read_services_file(config_filename):
     # },
     # ...
     # ]
-    #
 
     with open(config_filename) as config_file:
         configs = json.loads(config_file.read())
 
         assert isinstance(configs, list)
         for service_config in configs:
-            assert isinstance(service_config, dict)            
-            assert "service_url" in service_config            
+            assert isinstance(service_config, dict)
+            assert "service_url" in service_config
             assert "heartbeat_interval_seconds" in service_config
-            assert isinstance(service_config["service_url"], str)                        
+            assert isinstance(service_config["service_url"], str)
             assert isinstance(service_config["heartbeat_interval_seconds"], int)
             if "regex" in service_config:
                 assert isinstance(service_config["regex"], str)
-                
         return configs
 
+
 async def poll_service(service):
-        url = service["service_url"]   
-        
-        print("Polling " + url)
-        
+        url = service["service_url"]
+
+        logging.info("Polling " + url)
+
         time_before = datetime.datetime.now()
-        
+
         # TODO: what should we do on timeout?
         r = requests.get(url, timeout=heartbeat_timeout_seconds)
-        
-        # https://stackoverflow.com/questions/1905403/python-timemilli-seconds-calculation
+
         time_after = datetime.datetime.now()
         diff = time_after - time_before
         duration_millis = diff.total_seconds() * 1000
@@ -101,7 +107,7 @@ async def poll_service(service):
         except Exception as e:
             logging.exception(e)
             raise e
-        
+
         heartbeat = {}
         heartbeat["service_url"]          = str(url)
         heartbeat["timestamp"]            = str(datetime.datetime.now(datetime.timezone.utc).isoformat())
@@ -111,9 +117,9 @@ async def poll_service(service):
         return heartbeat
 
 
-async def write_to_kafka(producer, kafka_topic, heartbeat_dict):    
+async def write_to_kafka(producer, kafka_topic, heartbeat_dict):
     as_string = json.dumps(heartbeat_dict)
-    print(as_string)    
+    logging.debug("write_to_kafka: " + as_string)
     producer.send(kafka_topic, as_string.encode("utf-8"))
     producer.flush()
 
@@ -122,14 +128,16 @@ async def poll_and_write(service, producer, kafka_topic):
     heartbeat_dict = await poll_service(service)
     await write_to_kafka(producer, kafka_topic, heartbeat_dict)
     interval = service["heartbeat_interval_seconds"]
-    print(str(service["service_url"]) + " should sleep for " + str(interval) + " seconds")
-    await asyncio.sleep(interval)   
+    logging.info(str(service["service_url"]) + " sleeping for " + str(interval) + " seconds")
+    await asyncio.sleep(interval)
     await poll_and_write(service, producer, kafka_topic)
+
+
+# --- Entry point ---
 
 
 async def run_agent(services_list):
     producer = init_kafka_producer()
-
     tasks = []
     for service in services_list:
         tasks.append( poll_and_write(service, producer, kafka_topic) )
