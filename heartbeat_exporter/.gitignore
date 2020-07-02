@@ -1,5 +1,6 @@
-/kafka_conf/
-/psql_conf/
+/dist
+/build
+/*.egg-info
 /venv/
 /__pycache__
 /.pytest_cache

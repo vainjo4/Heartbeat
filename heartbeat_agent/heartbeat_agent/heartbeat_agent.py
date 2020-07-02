@@ -1,3 +1,4 @@
+import argparse
 import asyncio
 import configparser
 import datetime
@@ -10,50 +11,47 @@ import sys
 from kafka import KafkaProducer
 import requests
 
+parser=argparse.ArgumentParser()
+
+parser.add_argument('--config', help='General configuration')
+parser.add_argument('--kafka_conf', help='Kafka configuration')
+
+args=parser.parse_args()
 
 current_dir = os.path.dirname(os.path.realpath(__file__))
 logging.basicConfig(level=logging.INFO, format="[%(asctime)s] [%(levelname)s] - %(message)s")
 
-
 # --- Configuration ---
 
 config = configparser.ConfigParser()
-configuration_file = sys.argv[1] if len(sys.argv) > 1 else os.path.join(current_dir, "conf", "heartbeat_agent.cfg")
+configuration_file = args.config if hasattr(args, "config") and args.config else os.path.join(current_dir, "conf", "heartbeat_agent.cfg")
 config.read(configuration_file)
 
-heartbeat_services_filepath = os.path.join(current_dir, config["heartbeat-agent"]["heartbeat_services_filepath"])
-heartbeat_timeout_seconds = float(config["heartbeat-agent"]["heartbeat_timeout_seconds"])
+kafka_conf_dir = args.kafka_conf if hasattr(args, "kafka_conf") and args.kafka_conf else os.path.join(current_dir, config["heartbeat_agent"]["kafka_conf_dir"])
 
-kafka_conf_dir = os.path.join(current_dir, config["heartbeat-agent"]["kafka_conf_dir"])
-kafka_topic = config["heartbeat-agent"]["kafka_topic"]
-kafka_security_protocol = config["heartbeat-agent"]["kafka_security_protocol"]
+heartbeat_services_filepath = os.path.join(current_dir, config["heartbeat_agent"]["heartbeat_services_filepath"])
+
+heartbeat_timeout_seconds = float(config["heartbeat_agent"]["heartbeat_timeout_seconds"])
+
+kafka_topic = config["heartbeat_agent"]["kafka_topic"]
+kafka_security_protocol = config["heartbeat_agent"]["kafka_security_protocol"]
 
 kafka_urlfile_path = os.path.join(kafka_conf_dir, "kafka_url.txt")
 kafka_cafile_path = os.path.join(kafka_conf_dir, "ca.pem")
 kafka_certfile_path = os.path.join(kafka_conf_dir, "service.cert")
 kafka_keyfile_path = os.path.join(kafka_conf_dir, "service.key")
 
-event_loop = asyncio.get_event_loop()
+
+#event_loop = asyncio.get_event_loop()
+
 
 def get_kafka_url():
     with open(kafka_urlfile_path, "r") as file:
         url = file.read().strip()
         return url
 
+
 kafka_url = get_kafka_url()
-
-
-# --- Functions ---
-
-
-def init_kafka_producer():
-    return KafkaProducer(
-        bootstrap_servers=kafka_url,
-        security_protocol=kafka_security_protocol,
-        ssl_cafile=kafka_cafile_path,
-        ssl_certfile=kafka_certfile_path,
-        ssl_keyfile=kafka_keyfile_path,
-    )
 
 
 def read_services_file(config_filename):
@@ -81,6 +79,22 @@ def read_services_file(config_filename):
             if "regex" in service_config:
                 assert isinstance(service_config["regex"], str)
         return configs
+
+
+services_list = read_services_file(heartbeat_services_filepath)
+
+
+# --- Functions ---
+
+
+def init_kafka_producer():
+    return KafkaProducer(
+        bootstrap_servers=kafka_url,
+        security_protocol=kafka_security_protocol,
+        ssl_cafile=kafka_cafile_path,
+        ssl_certfile=kafka_certfile_path,
+        ssl_keyfile=kafka_keyfile_path,
+    )
 
 
 async def poll_service(service):
@@ -133,16 +147,19 @@ async def poll_and_write(service, producer, kafka_topic):
     await poll_and_write(service, producer, kafka_topic)
 
 
-# --- Entry point ---
-
-
-async def run_agent(services_list):
+async def run_agent():
     producer = init_kafka_producer()
     tasks = []
     for service in services_list:
         tasks.append( poll_and_write(service, producer, kafka_topic) )
     await asyncio.wait(tasks)
 
+
+# --- Entry point ---
+
+# wheel commandline entry point
+def run():
+    asyncio.run(run_agent())
+
 if __name__ == "__main__":
-    services_list = read_services_file(heartbeat_services_filepath)
-    event_loop.run_until_complete(run_agent(services_list))
+    run()

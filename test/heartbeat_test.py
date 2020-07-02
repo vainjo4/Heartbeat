@@ -28,14 +28,14 @@ def test_e2e():
     configuration_file = "heartbeat_exporter_test.cfg"
     config.read(configuration_file)
 
-    database_table_name = config["heartbeat-exporter"]["database_table_name"]
+    database_table_name = config["heartbeat_exporter"]["database_table_name"]
 
     psql_conf_dir = os.path.join(current_dir, "..", "psql_conf")
     psql_urifile_path = os.path.join(psql_conf_dir, "psql_uri.txt")
     psql_cafile_path = os.path.join(psql_conf_dir, "ca.pem")
 
-    heartbeat_agent_dir = os.path.join(current_dir, "..", "heartbeat_agent")
-    heartbeat_exporter_dir = os.path.join(current_dir, "..", "heartbeat_exporter")
+    heartbeat_agent_dir = os.path.join(current_dir, "..", "heartbeat_agent", "heartbeat_agent")
+    heartbeat_exporter_dir = os.path.join(current_dir, "..", "heartbeat_exporter", "heartbeat_exporter")
 
     def get_psql_uri():
         with open(psql_urifile_path, "r") as file:
@@ -53,13 +53,19 @@ def test_e2e():
         logging.info("Starting agent ...")
         time_at_test_start = datetime.datetime.now(datetime.timezone.utc)
 
-        agent_args = [python_to_use, os.path.join(heartbeat_agent_dir, "heartbeat_agent.py"), os.path.join(current_dir, "heartbeat_agent_test.cfg")]
+        agent_path = os.path.join(heartbeat_agent_dir, "heartbeat_agent.py")
+        agent_config_path = os.path.join(current_dir, "heartbeat_agent_test.cfg")
+
+        agent_args = [python_to_use, agent_path, "--config", agent_config_path]
         agent_proc = subprocess.Popen(agent_args)
         time.sleep(5)
         agent_proc.kill()
 
+        exporter_path = os.path.join(heartbeat_exporter_dir, "heartbeat_exporter.py")
+        exporter_config_path = os.path.join(current_dir, "heartbeat_exporter_test.cfg")
+
         logging.info("Starting exporter ...")
-        exporter_args = [python_to_use, os.path.join(heartbeat_exporter_dir, "heartbeat_exporter.py"), os.path.join(current_dir, "heartbeat_exporter_test.cfg")]
+        exporter_args = [python_to_use, exporter_path, "--config", exporter_config_path]
         exporter_proc = subprocess.Popen(exporter_args)
 
         time.sleep(10)

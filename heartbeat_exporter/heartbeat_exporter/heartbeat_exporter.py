@@ -1,3 +1,4 @@
+import argparse
 import configparser
 import json
 import logging
@@ -10,26 +11,33 @@ from kafka import KafkaConsumer
 import psycopg2
 from psycopg2.extras import RealDictCursor
 
+parser=argparse.ArgumentParser()
+
+parser.add_argument('--config', help='General configuration')
+parser.add_argument('--kafka_conf', help='Kafka configuration')
+parser.add_argument('--psql_conf', help='PostgreSQL configuration')
+
+args=parser.parse_args()
 
 current_dir = os.path.dirname(os.path.realpath(__file__))
 logging.basicConfig(level=logging.INFO, format="[%(asctime)s] [%(levelname)s] - %(message)s")
 
-
 # --- Configuration ---
 
 config = configparser.ConfigParser()
-configuration_file = sys.argv[1] if len(sys.argv) > 1 else os.path.join(current_dir, "conf", "heartbeat_agent.cfg")
+configuration_file = args.config if hasattr(args, "config") and args.config else os.path.join(current_dir, "conf", "heartbeat_exporter.cfg")
 config.read(configuration_file)
 
-kafka_conf_dir = os.path.join(current_dir, config["heartbeat-exporter"]["kafka_conf_dir"])
-psql_conf_dir = os.path.join(current_dir, config["heartbeat-exporter"]["psql_conf_dir"])
-topic_name = config["heartbeat-exporter"]["topic_name"]
-database_table_name = config["heartbeat-exporter"]["database_table_name"]
-kafka_consumer_timeout_millis = int(config["heartbeat-exporter"]["kafka_consumer_timeout_millis"])
-kafka_client_id = config["heartbeat-exporter"]["kafka_client_id"]
-kafka_group_id = config["heartbeat-exporter"]["kafka_group_id"]
-kafka_auto_offset_reset = config["heartbeat-exporter"]["kafka_auto_offset_reset"]
-kafka_security_protocol = config["heartbeat-exporter"]["kafka_security_protocol"]
+kafka_conf_dir = args.kafka_conf if hasattr(args, "kafka_conf") and args.kafka_conf else os.path.join(current_dir, config["heartbeat_exporter"]["kafka_conf_dir"])
+psql_conf_dir = args.psql_conf if hasattr(args, "psql_conf") and args.psql_conf else os.path.join(current_dir, config["heartbeat_exporter"]["psql_conf_dir"])
+
+topic_name = config["heartbeat_exporter"]["topic_name"]
+database_table_name = config["heartbeat_exporter"]["database_table_name"]
+kafka_consumer_timeout_millis = int(config["heartbeat_exporter"]["kafka_consumer_timeout_millis"])
+kafka_client_id = config["heartbeat_exporter"]["kafka_client_id"]
+kafka_group_id = config["heartbeat_exporter"]["kafka_group_id"]
+kafka_auto_offset_reset = config["heartbeat_exporter"]["kafka_auto_offset_reset"]
+kafka_security_protocol = config["heartbeat_exporter"]["kafka_security_protocol"]
 
 kafka_urlfile_path = os.path.join(kafka_conf_dir, "kafka_url.txt")
 kafka_cafile_path = os.path.join(kafka_conf_dir, "ca.pem")
