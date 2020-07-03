@@ -11,7 +11,7 @@ setup(
     },
     install_requires=[
         "kafka-python==2.0.1",
-        "psycopg2==2.8.5"
+        "psycopg2-binary==2.8.5"
     ],
     package_data={
         "heartbeat_exporter": ["conf/heartbeat_exporter.cfg"]

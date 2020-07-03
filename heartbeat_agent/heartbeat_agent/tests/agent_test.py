@@ -84,7 +84,6 @@ def test_poll_nonexistent_url():
     after_poll = datetime.datetime.now(datetime.timezone.utc)
 
     assert heartbeat["service_url"] == url
-    assert 0 <= heartbeat["response_time_millis"] < 1000
     assert heartbeat["status_code"] == -1
     assert heartbeat["regex_match"] == None
     
@@ -104,7 +103,6 @@ def test_poll_nonresponding_url():
     after_poll = datetime.datetime.now(datetime.timezone.utc)
 
     assert heartbeat["service_url"] == url
-    assert 1000 < heartbeat["response_time_millis"] < 10000
     assert heartbeat["status_code"] == -1
     assert heartbeat["regex_match"] == None
     
