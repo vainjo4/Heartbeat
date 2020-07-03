@@ -1,9 +1,11 @@
-from setuptools import setup, find_packages
+#!/usr/bin/python3
+
+from setuptools import setup
 
 setup(
     name="heartbeat_exporter",
     version="0.1",
-    packages=find_packages(),
+    packages=["heartbeat_exporter"],
     entry_points={
         "console_scripts": [
             "heartbeat_exporter = heartbeat_exporter.heartbeat_exporter:run"

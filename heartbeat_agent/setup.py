@@ -1,9 +1,11 @@
+#!/usr/bin/python3
+
 from setuptools import setup, find_packages
 
 setup(
     name="heartbeat_agent",
     version="0.1",
-    packages=find_packages(),
+    packages=["heartbeat_agent"],
     entry_points={
         "console_scripts": [
             "heartbeat_agent = heartbeat_agent.heartbeat_agent:run"

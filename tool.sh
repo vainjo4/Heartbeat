@@ -35,12 +35,19 @@ else
 fi
 
 if [ "$TASK" == 'build' ]; then
-  $PYTHON heartbeat_exporter/setup.py bdist_wheel
-  $PYTHON heartbeat_agent/setup.py bdist_wheel
+
+  cd heartbeat_exporter
+  $PYTHON setup.py bdist_wheel
+  cd ..
+
+  cd heartbeat_agent
+  $PYTHON setup.py bdist_wheel
+  cd ..
 
   echo ""
   echo "Wheels can be found in"
-  echo "  $SCRIPT_DIR/dist"
+  echo "  $SCRIPT_DIR/heartbeat_agent/dist"
+  echo "  $SCRIPT_DIR/heartbeat_exporter/dist"
   echo ""
 fi
 

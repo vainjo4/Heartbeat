@@ -18,7 +18,7 @@ def test_e2e():
     logging.info("e2e_test")
 
     config = configparser.ConfigParser()
-    exporter_test_configuration_file = "heartbeat_exporter_test.cfg"
+    exporter_test_configuration_file = os.path.join(current_dir, "heartbeat_exporter_test.cfg")
     config.read(exporter_test_configuration_file)
     database_table_name = config["heartbeat_exporter"]["database_table_name"]
 
