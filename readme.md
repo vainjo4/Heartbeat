@@ -40,6 +40,9 @@ To run the components manually, run in repo root:
 
 `
 python heartbeat_agent/heartbeat_agent.py --kafka_conf=../../kafka_conf
+`
+
+`
 python heartbeat_exporter/heartbeat_exporter.py --kafka_conf=../../kafka_conf --psql_conf=../../psql_conf
 `
 
