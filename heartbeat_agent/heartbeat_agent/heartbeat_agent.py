@@ -30,7 +30,6 @@ config.read(configuration_file)
 kafka_conf_dir = args.kafka_conf if hasattr(args, "kafka_conf") and args.kafka_conf else os.path.join(current_dir, config["heartbeat_agent"]["kafka_conf_dir"])
 
 heartbeat_services_filepath = os.path.join(current_dir, config["heartbeat_agent"]["heartbeat_services_filepath"])
-
 heartbeat_timeout_seconds = float(config["heartbeat_agent"]["heartbeat_timeout_seconds"])
 
 kafka_topic = config["heartbeat_agent"]["kafka_topic"]

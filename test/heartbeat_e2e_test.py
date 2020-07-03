@@ -14,20 +14,12 @@ from psycopg2.extras import RealDictCursor
 current_dir = os.path.dirname(os.path.realpath(__file__))
 logging.basicConfig(level=logging.INFO, format="[%(asctime)s] [%(levelname)s] - %(message)s")
 
-
-if len(sys.argv) > 1:
-    python_to_use = sys.argv[1]
-else:
-    python_to_use = "../venv/Scripts/python"
-
-
 def test_e2e():
     logging.info("e2e_test")
 
     config = configparser.ConfigParser()
-    configuration_file = "heartbeat_exporter_test.cfg"
-    config.read(configuration_file)
-
+    exporter_test_configuration_file = "heartbeat_exporter_test.cfg"
+    config.read(exporter_test_configuration_file)
     database_table_name = config["heartbeat_exporter"]["database_table_name"]
 
     psql_conf_dir = os.path.join(current_dir, "..", "psql_conf")
@@ -56,7 +48,7 @@ def test_e2e():
         agent_path = os.path.join(heartbeat_agent_dir, "heartbeat_agent.py")
         agent_config_path = os.path.join(current_dir, "heartbeat_agent_test.cfg")
 
-        agent_args = [python_to_use, agent_path, "--config", agent_config_path]
+        agent_args = [sys.executable, agent_path, "--config", agent_config_path]
         agent_proc = subprocess.Popen(agent_args)
         time.sleep(5)
         agent_proc.kill()
@@ -65,7 +57,7 @@ def test_e2e():
         exporter_config_path = os.path.join(current_dir, "heartbeat_exporter_test.cfg")
 
         logging.info("Starting exporter ...")
-        exporter_args = [python_to_use, exporter_path, "--config", exporter_config_path]
+        exporter_args = [sys.executable, exporter_path, "--config", exporter_config_path]
         exporter_proc = subprocess.Popen(exporter_args)
 
         time.sleep(10)
@@ -77,20 +69,25 @@ def test_e2e():
 
         assert len(heartbeat_rows) == 3
 
-        assert heartbeat_rows[0]["service_url"] == "https://xkcd.com/"
-        assert heartbeat_rows[0]["status_code"] == 200
-        assert 10 < heartbeat_rows[0]["response_time_millis"] < 1000
-        assert heartbeat_rows[0]["regex_match"] == None
+        heartbeat_rows_xkcd = [ hb for hb in heartbeat_rows if hb["service_url"] == "https://xkcd.com/" ]
 
-        assert heartbeat_rows[1]["service_url"] == "https://example.com"
-        assert heartbeat_rows[1]["status_code"] == 200
-        assert 10 < heartbeat_rows[1]["response_time_millis"] < 1000
-        assert heartbeat_rows[1]["regex_match"] == True
+        assert len(heartbeat_rows_xkcd) == 2
+        assert heartbeat_rows_xkcd[0]["status_code"] == 200
+        assert 10 < heartbeat_rows_xkcd[0]["response_time_millis"] < 1000
+        assert heartbeat_rows_xkcd[0]["regex_match"] == None
+        assert heartbeat_rows_xkcd[1]["status_code"] == 200
+        assert 10 < heartbeat_rows_xkcd[1]["response_time_millis"] < 1000
+        assert heartbeat_rows_xkcd[1]["regex_match"] == None
 
-        assert heartbeat_rows[2]["service_url"] == "https://xkcd.com/"
-        assert heartbeat_rows[2]["status_code"] == 200
-        assert 10 < heartbeat_rows[2]["response_time_millis"] < 1000
-        assert heartbeat_rows[2]["regex_match"] == None
+        heartbeat_rows_example = [ hb for hb in heartbeat_rows if hb["service_url"] == "https://example.com" ]
+
+        assert len(heartbeat_rows_example) == 1
+        assert heartbeat_rows_example[0]["status_code"] == 200
+        assert 10 < heartbeat_rows_example[0]["response_time_millis"] < 1000
+        assert heartbeat_rows_example[0]["regex_match"] == True
+
+        logging.info("e2e_test done")
+
 
 if __name__ == "__main__":
     test_e2e()
