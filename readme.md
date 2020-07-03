@@ -27,16 +27,29 @@ Some manual configuration is required.
 
 ## Deployment
 
-Repository contains `tool.sh` but it does not work as it should.
+Repository contains `tool.sh`. Commands can't be chained.
 
-- `tool.sh setup` setups a virtualenv.
-- `tool.sh build` creates wheels from the components.
-- `tool.sh test` runs pytest. Exporter unit test does not work.
-- `tool.sh style-analysis` is unimplemented. Should run flake8 or other python static analysis tool.
-- `tool.sh install_agent` and `tool.sh install_agent` install the respective wheels in the current virtualenv. However, running the installed wheels does not work currently.
+- `bash tool.sh setup` setups a virtualenv at `test/venv` needed by the script.
+- `bash tool.sh build` creates wheels from the components.
+- `bash tool.sh test` runs pytest on the repo.
+- `bash tool.sh style-analysis` is unimplemented. Should run flake8 or other python static analysis tool.
+- `bash tool.sh install_agent`  installs the respective wheel in the `test/venv` virtualenv.
+- `bash tool.sh install_exporter` installs the respective wheel in the `test/venv` virtualenv.
 
 
-To run the components manually, run in repo root:
+To run the installed components, activate the virtualenv created by `tool.sh` in `test/venv` and run:
+`
+heartbeat_agent --kafka_conf=[path_to_kafka_conf]
+`
+
+`
+heartbeat_exporter --kafka_conf=[path_to_kafka_conf] --psql_conf=[path_to_psql_conf]
+`
+
+
+#### Manual running
+
+In case the install goes wrong and you need to run the components manually, run in repo root:
 
 `
 python heartbeat_agent/heartbeat_agent.py --kafka_conf=../../kafka_conf
@@ -53,8 +66,7 @@ python heartbeat_e2e_test.py
 `
 
 ## TODO
-- Wheels installed using `tool.sh install_` do not work.
-- Exporter unit test using `tool.sh test` also does not work. Other tests do.
+- Exporter unit test does not work when using `tool.sh test`; other tests work.
 - Flake8 static analysis integration.
-- Configuration is clunky.
-- Currently services to poll need to be configured before packaging.
+- Configuration is clunky. Should add option to pass new services.json on command line.
+- Next level: manage Kafka and PSQL configuration automatically
