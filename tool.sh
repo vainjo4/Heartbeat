@@ -61,9 +61,9 @@ if [ "$TASK" == 'style-analysis' ]; then
 fi
 
 if [ "$TASK" == 'install_agent' ]; then 
-  $PIP install dist/heartbeat_agent-0.1-py3-none-any.whl
+  $PIP install heartbeat_agent/dist/heartbeat_agent-0.1-py3-none-any.whl
 fi
 
 if [ "$TASK" == 'install_exporter' ]; then
-  $PIP install dist/heartbeat_exporter-0.1-py3-none-any.whl
+  $PIP install heartbeat_exporter/dist/heartbeat_exporter-0.1-py3-none-any.whl
 fi
