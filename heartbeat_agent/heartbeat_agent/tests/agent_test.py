@@ -19,7 +19,8 @@ def test_init():
 
 
 def _call_poll(service):
-    return asyncio.run(heartbeat_agent.poll_service(service))
+    loop = asyncio.get_event_loop()
+    return loop.run_until_complete(heartbeat_agent.poll_service(service))
 
 
 def _timestamp_str_between(before, after, between_str):

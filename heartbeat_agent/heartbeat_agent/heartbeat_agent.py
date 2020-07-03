@@ -170,7 +170,9 @@ async def run_agent():
 
 # wheel commandline entry point
 def run():
-    asyncio.run(run_agent())
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(run_agent())
+
 
 if __name__ == "__main__":
     run()
