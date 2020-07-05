@@ -52,7 +52,8 @@ if [ "$TASK" == 'build' ]; then
 fi
 
 if [ "$TASK" == 'test' ]; then
-  pytest
+  mkdir -p test/reports
+  pytest --junitxml=test/reports/heartbeat-test-report.xml
 fi
 
 if [ "$TASK" == 'style-analysis' ]; then

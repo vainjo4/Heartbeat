@@ -13,13 +13,13 @@ from kafka import KafkaConsumer
 import psycopg2
 from psycopg2.extras import RealDictCursor
 
-parser=argparse.ArgumentParser()
+parser = argparse.ArgumentParser()
 
 parser.add_argument('--config', help='General configuration')
 parser.add_argument('--kafka_conf', help='Kafka configuration')
 parser.add_argument('--psql_conf', help='PostgreSQL configuration')
 
-args=parser.parse_args()
+args, unknown = parser.parse_known_args()
 
 current_dir = os.path.dirname(os.path.realpath(__file__))
 logging.basicConfig(level=logging.INFO, format="[%(asctime)s] [%(levelname)s] - %(message)s")
