@@ -8,7 +8,6 @@ import json
 import logging
 import os
 import re
-import sys
 
 from kafka import KafkaProducer
 import requests
@@ -21,18 +20,28 @@ parser.add_argument('--kafka_conf', help='Kafka configuration')
 args, unknown = parser.parse_known_args()
 
 current_dir = os.path.dirname(os.path.realpath(__file__))
-logging.basicConfig(level=logging.INFO, format="[%(asctime)s] [%(levelname)s] - %(message)s")
+logging.basicConfig(level=logging.INFO,
+                    format="[%(asctime)s] [%(levelname)s] - %(message)s")
 
 # --- Configuration ---
 
 config = configparser.ConfigParser()
-configuration_file = args.config if hasattr(args, "config") and args.config else os.path.join(current_dir, "conf", "heartbeat_agent.cfg")
+configuration_file =
+    args.config if hasattr(args, "config") and args.config
+    else os.path.join(current_dir, "conf", "heartbeat_agent.cfg")
+
 config.read(configuration_file)
 
-kafka_conf_dir = args.kafka_conf if hasattr(args, "kafka_conf") and args.kafka_conf else os.path.join(current_dir, config["heartbeat_agent"]["kafka_conf_dir"])
+kafka_conf_dir =
+    args.kafka_conf if hasattr(args, "kafka_conf") and args.kafka_conf
+    else os.path.join(current_dir, config["heartbeat_agent"]["kafka_conf_dir"])
 
-heartbeat_services_filepath = os.path.join(current_dir, config["heartbeat_agent"]["heartbeat_services_filepath"])
-heartbeat_timeout_seconds = float(config["heartbeat_agent"]["heartbeat_timeout_seconds"])
+heartbeat_services_filepath =
+    os.path.join(current_dir,
+                 config["heartbeat_agent"]["heartbeat_services_filepath"])
+
+heartbeat_timeout_seconds =
+    float(config["heartbeat_agent"]["heartbeat_timeout_seconds"])
 
 kafka_topic = config["heartbeat_agent"]["kafka_topic"]
 kafka_security_protocol = config["heartbeat_agent"]["kafka_security_protocol"]
@@ -41,9 +50,6 @@ kafka_urlfile_path = os.path.join(kafka_conf_dir, "kafka_url.txt")
 kafka_cafile_path = os.path.join(kafka_conf_dir, "ca.pem")
 kafka_certfile_path = os.path.join(kafka_conf_dir, "service.cert")
 kafka_keyfile_path = os.path.join(kafka_conf_dir, "service.key")
-
-
-#event_loop = asyncio.get_event_loop()
 
 
 def get_kafka_url():
@@ -77,7 +83,8 @@ def read_services_file(config_filename):
             assert "heartbeat_interval_seconds" in service_config
             assert service_config["heartbeat_interval_seconds"] > 0
             assert isinstance(service_config["service_url"], str)
-            assert isinstance(service_config["heartbeat_interval_seconds"], int)
+            assert isinstance(service_config["heartbeat_interval_seconds"],
+                              int)
             if "regex" in service_config:
                 assert isinstance(service_config["regex"], str)
         return configs
@@ -103,10 +110,10 @@ async def poll_service(service):
         url = service["service_url"]
         logging.info("Polling " + url)
         time_before = datetime.datetime.now()
-        
+
         r = None
         regex_match = None
-        
+
         try:
             r = requests.get(url, timeout=heartbeat_timeout_seconds)
         except Exception as e:
@@ -119,7 +126,7 @@ async def poll_service(service):
             status_code = r.status_code
 
         time_after = datetime.datetime.now()
-        
+
         diff = time_after - time_before
         duration_millis = diff.total_seconds() * 1000
 
@@ -133,11 +140,12 @@ async def poll_service(service):
             logging.exception(e)
 
         heartbeat = {}
-        heartbeat["service_url"]          = str(url)
-        heartbeat["timestamp"]            = str(datetime.datetime.now(datetime.timezone.utc).isoformat())
+        heartbeat["service_url"] = str(url)
+        heartbeat["timestamp"] = str(datetime.datetime.now(
+                                     datetime.timezone.utc).isoformat())
         heartbeat["response_time_millis"] = int(duration_millis)
-        heartbeat["status_code"]          = int(status_code)
-        heartbeat["regex_match"]          = regex_match
+        heartbeat["status_code"] = int(status_code)
+        heartbeat["regex_match"] = regex_match
         return heartbeat
 
 
@@ -150,12 +158,13 @@ async def write_to_kafka(producer, kafka_topic, heartbeat_dict):
 
 async def poll_and_write(service, producer, kafka_topic):
     heartbeat_dict = await poll_service(service)
-    
-    if(heartbeat_dict):    
+
+    if(heartbeat_dict):
         await write_to_kafka(producer, kafka_topic, heartbeat_dict)
-    
+
     interval = service["heartbeat_interval_seconds"]
-    logging.info(str(service["service_url"]) + " sleeping for " + str(interval) + " seconds")
+    logging.info(str(service["service_url"]) + " sleeping for " +
+                 str(interval) + " seconds")
     await asyncio.sleep(interval)
     await poll_and_write(service, producer, kafka_topic)
 

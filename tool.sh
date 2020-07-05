@@ -52,13 +52,17 @@ if [ "$TASK" == 'build' ]; then
 fi
 
 if [ "$TASK" == 'test' ]; then
+  REPORT_PATH="test/reports/heartbeat-test-report.xml"
   mkdir -p test/reports
-  pytest --junitxml=test/reports/heartbeat-test-report.xml
+  rm -f "$REPORT_PATH"
+  pytest --junitxml="$REPORT_PATH"
 fi
 
 if [ "$TASK" == 'style-analysis' ]; then
+  REPORT_PATH="test/reports/heartbeat-flake8-report.txt"
   mkdir -p test/reports
-  flake8 . --output-file=test/reports/heartbeat-flake8-report.txt --exclude=".git,__pycache__,*.egg,*_cache,*/venv/*,*/build/*"
+  rm -f "$REPORT_PATH"
+  flake8 . --output-file="$REPORT_PATH" --exclude=".git,__pycache__,*.egg,*_cache,*/venv/*,*/build/*,*/dist/*"
 fi
 
 if [ "$TASK" == 'install_agent' ]; then 
