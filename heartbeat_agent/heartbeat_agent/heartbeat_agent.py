@@ -16,6 +16,7 @@ parser = argparse.ArgumentParser()
 
 parser.add_argument('--config', help='General configuration')
 parser.add_argument('--kafka_conf', help='Kafka configuration')
+parser.add_argument('--services_json', help='JSON containing services to poll')
 
 args, unknown = parser.parse_known_args()
 
@@ -36,9 +37,10 @@ kafka_conf_dir = args.kafka_conf \
     if hasattr(args, "kafka_conf") and args.kafka_conf \
     else os.path.join(current_dir, config["heartbeat_agent"]["kafka_conf_dir"])
 
-heartbeat_services_filepath = \
-    os.path.join(current_dir,
-                 config["heartbeat_agent"]["heartbeat_services_filepath"])
+heartbeat_services_filepath = args.services_json \
+    if hasattr(args, "services_json") and args.services_json \
+    else os.path.join(current_dir,
+         config["heartbeat_agent"]["heartbeat_services_filepath"]))
 
 heartbeat_timeout_seconds = \
     float(config["heartbeat_agent"]["heartbeat_timeout_seconds"])

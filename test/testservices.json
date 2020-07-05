@@ -6,6 +6,6 @@
   {
     "service_url": "https://example.com",
     "heartbeat_interval_seconds": 10,
-	"regex": ".*xample Domai.*"
+    "regex": ".*xample Domai.*"
   }
 ]
