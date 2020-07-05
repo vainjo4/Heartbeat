@@ -6,7 +6,7 @@ import sys
 import requests
 
 # This is an utility script for creating the Kafka and PostgreSQL conf
-# directories needed by Heartbeat.
+# directories needed by Heartbeat using the Aiven API.
 
 email = sys.argv[1]
 password = sys.argv[2]
