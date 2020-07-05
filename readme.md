@@ -18,7 +18,7 @@ Has been tested on Ubuntu 20.04 LTS (Windows Subsystem for Linux).
 Some manual steps are required.
 
 
-NOTE: If you are running your services on Aiven, you can use the utility script `scripts/create_conf_dirs.py` to generate the directories in 1) and 2) using the Aiven API.
+*NOTE*: If you are running your services on Aiven, you can use the utility script `scripts/create_conf_dirs.py` to generate the directories in 1) and 2) using the Aiven API.
 
 
 1. Create a directory for kafka configuration. To be able to run tests, name it `kafka_conf` and put it in repository root. It should contain:
@@ -37,7 +37,7 @@ NOTE: If you are running your services on Aiven, you can use the utility script 
 To configure the services to poll, write a valid json file in similar format, and pass it to the agent as `--services_json` parameter.
 
 
-4. Kafka topics should exist; automatic creation is TODO. Default topics used are `heartbeat-1` and for tests `heartbeat-test`.
+4. Kafka topics should exist. Default topics used are `heartbeat-1` and for tests `heartbeat-test`. Automatic creation is TODO. 
 
 
 ## Building & Testing
@@ -55,13 +55,13 @@ Repository contains `tool.sh`. Commands can't be chained.
 Note that having the wheels installed may cause name conflicts with the tests.
 
 
-To run the locally installed components, activate the virtualenv created by `tool.sh` in `test/venv` and run:
+To run the locally installed components, run respectively
 
 ```
 source test/venv/bin/activate
 heartbeat_agent --kafka_conf=[path to kafka_conf] --services_json=[optional; path to custom polling configuration]
 ```
-
+or
 ```
 source test/venv/bin/activate
 heartbeat_exporter --kafka_conf=[path_to_kafka_conf] --psql_conf=[path_to_psql_conf]
@@ -70,16 +70,18 @@ heartbeat_exporter --kafka_conf=[path_to_kafka_conf] --psql_conf=[path_to_psql_c
 
 #### Manual running
 
-In case the install goes wrong for any reason and you want to run the components from source, you can run in repo root respectively:
+If for any reason you want to run the components from source, you can use the commands
 
 ```
+source test/venv/bin/activate
 python heartbeat_agent/heartbeat_agent.py --kafka_conf=../../kafka_conf
 python heartbeat_exporter/heartbeat_exporter.py --kafka_conf=../../kafka_conf --psql_conf=../../psql_conf
 ```
 
-To run the end-to-end test manually, run in `test/`:
+To run the end-to-end test manually, run in `test`:
 
 ```
+source venv/bin/activate
 python heartbeat_e2e_test.py
 ```
 
@@ -92,15 +94,10 @@ Kafka and PSQL configuration need to be passed to the binary as command line arg
 If your services are on Aiven, you can use `create_conf_dirs.py` to generate the directories.
 
 
-To get the services running on a new machine, first run
+To get the services running on a new machine, run respectively
 
 ```
 python create_conf_dirs.py <aiven_email> <aiven_password> <project_name> <postgresql_service_name> <kafka_service_name>
-```
-
-and then respectively either
-
-```
 rm -rf psql_conf
 pip install <agent_wheel.whl>
 heartbeat_agent --kafka_conf=kafka_conf
@@ -109,6 +106,7 @@ heartbeat_agent --kafka_conf=kafka_conf
 or
 
 ```
+python create_conf_dirs.py <aiven_email> <aiven_password> <project_name> <postgresql_service_name> <kafka_service_name>
 pip install <exporter_wheel.whl>
 heartbeat_exporter --kafka_conf=kafka_conf --psql_conf=psql_conf
 ```
