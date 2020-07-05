@@ -57,8 +57,8 @@ if [ "$TASK" == 'test' ]; then
 fi
 
 if [ "$TASK" == 'style-analysis' ]; then
-  # integrate flake8
-  echo "TODO: unimplemented"
+  mkdir -p test/reports
+  flake8 . --output-file=test/reports/heartbeat-flake8-report.txt --exclude=".git,__pycache__,*.egg,*_cache,*/venv/*,*/build/*"
 fi
 
 if [ "$TASK" == 'install_agent' ]; then 
