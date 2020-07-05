@@ -40,7 +40,7 @@ kafka_conf_dir = args.kafka_conf \
 heartbeat_services_filepath = args.services_json \
     if hasattr(args, "services_json") and args.services_json \
     else os.path.join(current_dir,
-         config["heartbeat_agent"]["heartbeat_services_filepath"]))
+         config["heartbeat_agent"]["heartbeat_services_filepath"])
 
 heartbeat_timeout_seconds = \
     float(config["heartbeat_agent"]["heartbeat_timeout_seconds"])
