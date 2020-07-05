@@ -6,6 +6,7 @@ if [ "$#" -ne 1 ]; then
   echo "  setup: setups a virtualenv needed for the other commands"
   echo "  build: builds binary wheels of both components"
   echo "  test: runs tests"
+  echo "  style-analysis: runs static style analysis"
   echo "  install_agent: installs heartbeat_agent to local venv"
   echo "  install_exporter: installs heartbeat_exporter to local venv"  
   echo ""
@@ -19,19 +20,21 @@ cd "$SCRIPT_DIR"
 PYTHON=python3
 PIP=pip3
 
-echo $SCRIPT_DIR
+echo "Script running at $SCRIPT_DIR"
 
 if [ "$TASK" == 'setup' ] || [ ! -d test/venv ]; then
+  echo "Setup a virtualenv at $SCRIPT_DIR/test/venv"
   cd test
   $PYTHON -m venv venv
   source venv/bin/activate
   $PIP install -r requirements.txt
   cd ..
   if [ "$TASK" == 'setup' ]; then
-    exit 0  
+    exit 0
   fi
 else
   source test/venv/bin/activate
+  echo "Using the virtualenv at $SCRIPT_DIR/test/venv"
 fi
 
 if [ "$TASK" == 'build' ]; then
@@ -44,10 +47,13 @@ if [ "$TASK" == 'build' ]; then
   $PYTHON setup.py bdist_wheel
   cd ..
 
+  AGENT_PATH=$(ls "$SCRIPT_DIR"/heartbeat_agent/dist/*whl)
+  EXPORTER_PATH=$(ls "$SCRIPT_DIR"/heartbeat_exporter/dist/*whl)
+
   echo ""
-  echo "Wheels can be found in"
-  echo "  $SCRIPT_DIR/heartbeat_agent/dist"
-  echo "  $SCRIPT_DIR/heartbeat_exporter/dist"
+  echo "Build done, wheels can be found at"
+  echo "  $AGENT_PATH"
+  echo "  $EXPORTER_PATH"
   echo ""
 fi
 
@@ -56,6 +62,9 @@ if [ "$TASK" == 'test' ]; then
   mkdir -p test/reports
   rm -f "$REPORT_PATH"
   pytest --junitxml="$REPORT_PATH"
+  echo ""
+  echo "Pytest report is found at $REPORT_PATH"
+  echo ""
 fi
 
 if [ "$TASK" == 'style-analysis' ]; then
@@ -63,12 +72,25 @@ if [ "$TASK" == 'style-analysis' ]; then
   mkdir -p test/reports
   rm -f "$REPORT_PATH"
   flake8 . --output-file="$REPORT_PATH" --exclude=".git,__pycache__,*.egg,*_cache,*/venv/*,*/build/*,*/dist/*"
+  echo ""
+  echo "Flake8 report is found at $REPORT_PATH"
+  echo ""
 fi
 
-if [ "$TASK" == 'install_agent' ]; then 
-  $PIP install heartbeat_agent/dist/heartbeat_agent-0.1-py3-none-any.whl
+if [ "$TASK" == 'install_agent' ]; then
+  AGENT_PATH=$(ls "$SCRIPT_DIR"/heartbeat_agent/dist/*whl)
+  $PIP install "$AGENT_PATH"
+  echo ""
+  echo "Install agent locally: Done"
+  echo ""
 fi
 
 if [ "$TASK" == 'install_exporter' ]; then
-  $PIP install heartbeat_exporter/dist/heartbeat_exporter-0.1-py3-none-any.whl
+  EXPORTER_PATH=$(ls "$SCRIPT_DIR"/heartbeat_exporter/dist/*whl)
+  $PIP install "$EXPORTER_PATH"
+  echo ""
+  echo "Install exporter locally: Done"
+  echo ""
 fi
+
+
