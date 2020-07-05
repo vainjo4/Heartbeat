@@ -7,9 +7,7 @@ import os
 import sys
 import time
 
-sys.path.append(os.path.join(os.path.dirname(
-                os.path.realpath(__file__)), '../'))
-import heartbeat_agent  # noqa: E402
+from .. import heartbeat_agent
 
 
 logging.basicConfig(level=logging.INFO,
