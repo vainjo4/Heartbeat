@@ -56,13 +56,16 @@ Note that having the wheels installed may cause name conflicts with the tests.
 
 
 To run the locally installed components, activate the virtualenv created by `tool.sh` in `test/venv` and run:
+
 `
 source test/venv/bin/activate
+
 heartbeat_agent --kafka_conf=[path to kafka_conf] --services_json=[optional; path to custom polling configuration]
 `
 
 `
 source test/venv/bin/activate
+
 heartbeat_exporter --kafka_conf=[path_to_kafka_conf] --psql_conf=[path_to_psql_conf]
 `
 
@@ -95,18 +98,26 @@ If your services are on Aiven, you can use `create_conf_dirs.py` to generate the
 
 
 To get the services running on a new machine, first run
+
 `
 python create_conf_dirs.py <aiven_email> <aiven_password> <project_name> <postgresql_service_name> <kafka_service_name>
 `
+
 and then respectively either
+
 `
 rm -rf psql_conf
+
 pip install <agent_wheel.whl>
+
 heartbeat_agent --kafka_conf=kafka_conf
 `
+
 or
+
 `
 pip install <exporter_wheel.whl>
+
 heartbeat_exporter --kafka_conf=kafka_conf --psql_conf=psql_conf
 `
 
