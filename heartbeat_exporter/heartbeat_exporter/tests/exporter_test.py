@@ -6,10 +6,7 @@ import sys
 
 sys.path.append(os.path.join(os.path.dirname(
                 os.path.realpath(__file__)), '../'))
-
-
-import heartbeat_exporter
-
+import heartbeat_exporter  # noqa: E402
 
 logging.basicConfig(level=logging.INFO,
                     format="[%(asctime)s] [%(levelname)s] - %(message)s")

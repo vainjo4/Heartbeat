@@ -26,21 +26,21 @@ logging.basicConfig(level=logging.INFO,
 # --- Configuration ---
 
 config = configparser.ConfigParser()
-configuration_file =
-    args.config if hasattr(args, "config") and args.config
+configuration_file = args.config \
+    if hasattr(args, "config") and args.config \
     else os.path.join(current_dir, "conf", "heartbeat_agent.cfg")
 
 config.read(configuration_file)
 
-kafka_conf_dir =
-    args.kafka_conf if hasattr(args, "kafka_conf") and args.kafka_conf
+kafka_conf_dir = args.kafka_conf \
+    if hasattr(args, "kafka_conf") and args.kafka_conf \
     else os.path.join(current_dir, config["heartbeat_agent"]["kafka_conf_dir"])
 
-heartbeat_services_filepath =
+heartbeat_services_filepath = \
     os.path.join(current_dir,
                  config["heartbeat_agent"]["heartbeat_services_filepath"])
 
-heartbeat_timeout_seconds =
+heartbeat_timeout_seconds = \
     float(config["heartbeat_agent"]["heartbeat_timeout_seconds"])
 
 kafka_topic = config["heartbeat_agent"]["kafka_topic"]
@@ -107,46 +107,46 @@ def init_kafka_producer():
 
 
 async def poll_service(service):
-        url = service["service_url"]
-        logging.info("Polling " + url)
-        time_before = datetime.datetime.now()
+    url = service["service_url"]
+    logging.info("Polling " + url)
+    time_before = datetime.datetime.now()
 
-        r = None
-        regex_match = None
+    r = None
+    regex_match = None
 
-        try:
-            r = requests.get(url, timeout=heartbeat_timeout_seconds)
-        except Exception as e:
-            logging.error(e)
+    try:
+        r = requests.get(url, timeout=heartbeat_timeout_seconds)
+    except Exception as e:
+        logging.error(e)
 
-        # can't simply test for truthiness; error codes are falsy
-        if r == None:
-            status_code = -1
-        else:
-            status_code = r.status_code
+    # can't simply test for truthiness; error codes are falsy
+    if r is None:
+        status_code = -1
+    else:
+        status_code = r.status_code
 
-        time_after = datetime.datetime.now()
+    time_after = datetime.datetime.now()
 
-        diff = time_after - time_before
-        duration_millis = diff.total_seconds() * 1000
+    diff = time_after - time_before
+    duration_millis = diff.total_seconds() * 1000
 
-        try:
-            if r and "regex" in service and service["regex"]:
-                if re.search(service["regex"], r.text):
-                    regex_match = True
-                else:
-                    regex_match = False
-        except Exception as e:
-            logging.exception(e)
+    try:
+        if r and "regex" in service and service["regex"]:
+            if re.search(service["regex"], r.text):
+                regex_match = True
+            else:
+                regex_match = False
+    except Exception as e:
+        logging.exception(e)
 
-        heartbeat = {}
-        heartbeat["service_url"] = str(url)
-        heartbeat["timestamp"] = str(datetime.datetime.now(
-                                     datetime.timezone.utc).isoformat())
-        heartbeat["response_time_millis"] = int(duration_millis)
-        heartbeat["status_code"] = int(status_code)
-        heartbeat["regex_match"] = regex_match
-        return heartbeat
+    heartbeat = {}
+    heartbeat["service_url"] = str(url)
+    heartbeat["timestamp"] = str(datetime.datetime.now(
+                                 datetime.timezone.utc).isoformat())
+    heartbeat["response_time_millis"] = int(duration_millis)
+    heartbeat["status_code"] = int(status_code)
+    heartbeat["regex_match"] = regex_match
+    return heartbeat
 
 
 async def write_to_kafka(producer, kafka_topic, heartbeat_dict):
@@ -173,7 +173,7 @@ async def run_agent():
     producer = init_kafka_producer()
     tasks = []
     for service in services_list:
-        tasks.append( poll_and_write(service, producer, kafka_topic) )
+        tasks.append(poll_and_write(service, producer, kafka_topic))
     await asyncio.wait(tasks)
 
 

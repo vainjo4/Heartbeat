@@ -9,7 +9,7 @@ import time
 
 sys.path.append(os.path.join(os.path.dirname(
                 os.path.realpath(__file__)), '../'))
-import heartbeat_agent
+import heartbeat_agent  # noqa: E402
 
 
 logging.basicConfig(level=logging.INFO,
@@ -69,7 +69,7 @@ def test_poll_redirect_301():
 
     assert heartbeat["service_url"] == url
     assert 0 < heartbeat["response_time_millis"] < 1000
-    assert heartbeat["status_code"] == 200 # requests follows 301 redirect
+    assert heartbeat["status_code"] == 200  # requests follows 301 redirect
     assert heartbeat["regex_match"] is False
 
     _timestamp_str_between(before_poll, after_poll, heartbeat["timestamp"])
