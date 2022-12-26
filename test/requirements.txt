@@ -1,4 +1,4 @@
-wheel==0.34.2
+wheel==0.38.1
 kafka-python==2.0.1
 requests==2.24.0
 psycopg2-binary==2.8.5
